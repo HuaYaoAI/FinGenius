@@ -402,6 +402,14 @@ class CreateHtmlTool(BaseTool):
                     if matches:
                         logger.info(f"Pattern {i+1} matched {len(matches)} times: {pattern[:50]}...")
                         html_content = re.sub(pattern, replacement, html_content, count=1, flags=re.DOTALL | re.IGNORECASE)
+                        # 注入数据加载完成标记
+                        html_content = html_content.replace('window.dataLoadingState = {', 'window.dataLoadingState = {')
+                        html_content = re.sub(
+                            r'(window\.dataLoadingState\s*=\s*\{[^}]*\})',
+                            '\1;\n        window.dataLoadingState.isLoaded = true;',
+                            html_content,
+                            count=1
+                        )
                         logger.info(f"Successfully replaced existing data using pattern {i+1}")
                         injection_success = True
                         break
@@ -443,7 +451,7 @@ class CreateHtmlTool(BaseTool):
                     match = re.search(pattern, html_content, re.IGNORECASE)
                     if match:
                         insertion_point = match.end()
-                        data_injection = f"\n        // 页面数据全局变量 - 自动注入\n        const reportData = {safe_data};\n"
+                        data_injection = f"\n        // 页面数据全局变量 - 自动注入\n        const reportData = {safe_data};\n        // 设置数据加载状态\n        window.dataLoadingState.isLoaded = true;\n"
                         html_content = html_content[:insertion_point] + data_injection + html_content[insertion_point:]
                         logger.info(f"Successfully injected data using fallback at position {insertion_point}")
                         injection_success = True
@@ -464,10 +472,22 @@ class CreateHtmlTool(BaseTool):
                 else:
                     logger.info(f"✅ Data injection successful, total declarations: {total_declarations}")
                 
-                # 验证JSON格式
+                # 验证JSON格式和数据结构
                 try:
-                    json.loads(safe_data)
-                    logger.info("✅ Injected data is valid JSON")
+                    data_obj = json.loads(safe_data)
+                    # 验证必需字段
+                    required_fields = ['stock_code', 'battle_results', 'analysis_results', 'debate_results']
+                    missing_fields = [field for field in required_fields if field not in data_obj]
+                    
+                    if missing_fields:
+                        logger.error(f"❌ Missing required fields in data: {missing_fields}")
+                    else:
+                        # 验证数据类型
+                        if not isinstance(data_obj.get('battle_results'), list):
+                            logger.error("❌ battle_results must be an array")
+                        if not isinstance(data_obj.get('debate_results'), list):
+                            logger.error("❌ debate_results must be an array")
+                        logger.info("✅ Injected data structure is valid")
                 except json.JSONDecodeError as e:
                     logger.error(f"❌ Injected data is invalid JSON: {e}")
                     
