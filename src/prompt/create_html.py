@@ -488,33 +488,119 @@ CREATE_HTML_TEMPLATE_PROMPT = """
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // 页面数据全局变量 - 将被填充实际数据
-        let reportData = {};
-        
-        // DOM加载完成后执行
-        document.addEventListener('DOMContentLoaded', function() {
-            // 直接渲染页面，数据将在注入时被替换
-            renderPage();
-            
-            // 初始化交互功能
-            initializeInteractions();
-        });
-        
-        // 渲染整个页面
-        function renderPage() {
-            renderOverview();
-            renderAnalysis();
-            renderDebate();
+        // 页面初始化
+        function initializePage() {
+            try {
+                renderPage();
+                initializeInteractions();
+            } catch (error) {
+                console.error('页面渲染失败:', error);
+                const errorMessage = `
+                    <div class="alert alert-danger">
+                        <h4 class="alert-heading">页面渲染失败</h4>
+                        <p>很抱歉，在渲染页面时发生错误。错误信息：${error.message}</p>
+                        <hr>
+                        <p class="mb-0">请刷新页面重试，如果问题持续存在，请联系技术支持。</p>
+                    </div>
+                `;
+                document.getElementById('overview').innerHTML = errorMessage;
+                document.getElementById('analysis').innerHTML = '';
+                document.getElementById('debate').innerHTML = '';
+            }
         }
+
+        // DOM加载完成后执行
+          document.addEventListener('DOMContentLoaded', function() {
+              // 显示加载状态
+              document.getElementById('overview').innerHTML = '<div class="alert alert-info">数据加载中...</div>';
+              
+              // 检查数据加载状态
+              if (window.dataLoadingState.isLoaded) {
+                  if (reportData && Object.keys(reportData).length > 0) {
+                      initializePage();
+                  } else {
+                      console.error('页面数据未正确加载');
+                      document.getElementById('overview').innerHTML = '<div class="alert alert-danger">数据加载失败</div>';
+                  }
+              } else {
+                  // 设置超时检查
+                  setTimeout(() => {
+                      if (!window.dataLoadingState.isLoaded) {
+                          console.error('数据加载超时');
+                          document.getElementById('overview').innerHTML = '<div class="alert alert-danger">数据加载超时</div>';
+                      }
+                  }, 5000);
+              }
+          });
+
+        // 页面数据注入点 - 将被自动替换
+         let reportData = {};
+         
+         // 添加数据加载状态指示
+         window.dataLoadingState = {
+             isLoaded: false,
+             error: null
+         };
+         
+         // 监听数据加载状态
+         Object.defineProperty(window.dataLoadingState, 'isLoaded', {
+             set: function(value) {
+                 this._isLoaded = value;
+                 if (value && reportData && Object.keys(reportData).length > 0) {
+                     initializePage();
+                 }
+             },
+             get: function() {
+                 return this._isLoaded;
+             }
+         });
+        
+        // 验证数据完整性
+         function validateReportData() {
+             const requiredFields = [
+                 'stock_code',
+                 'battle_results',
+                 'analysis_results',
+                 'debate_results'
+             ];
+             
+             const missingFields = requiredFields.filter(field => !reportData[field]);
+             
+             if (missingFields.length > 0) {
+                 throw new Error(`数据不完整，缺少以下字段：${missingFields.join(', ')}`);
+             }
+             
+             // 验证具体字段的数据结构
+             if (!Array.isArray(reportData.battle_results)) {
+                 throw new Error('battle_results 必须是数组类型');
+             }
+             
+             if (!Array.isArray(reportData.debate_results)) {
+                 throw new Error('debate_results 必须是数组类型');
+             }
+             
+             return true;
+         }
+         
+         // 渲染整个页面
+         function renderPage() {
+             // 首先验证数据
+             validateReportData();
+             
+             // 开始渲染各个部分
+             renderOverview();
+             renderAnalysis();
+             renderDebate();
+         }
         
         // 渲染概览部分
         function renderOverview() {
             const overview = document.getElementById('overview');
             const stockCode = reportData.stock_code || '未知';
-            const voteResults = reportData.vote_results || {};
-            const bullishCount = voteResults.bullish || 0;
-            const bearishCount = voteResults.bearish || 0;
-            const finalDecision = voteResults.final_decision || 'unknown';
+            const battleResults = reportData.battle_results || {};
+            const bullishCount = battleResults.vote_count?.bullish || 0;
+            const bearishCount = battleResults.vote_count?.bearish || 0;
+            const finalDecision = battleResults.final_decision || 'unknown';
             
             const totalVotes = bullishCount + bearishCount;
             const bullishPct = totalVotes > 0 ? (bullishCount / totalVotes * 100).toFixed(1) : 0;

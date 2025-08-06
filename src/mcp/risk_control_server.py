@@ -1,16 +1,18 @@
 from src.mcp.server import MCPServer
 from src.tool import Terminate
-from src.tool.risk_control import RiskControlTool
+from src.tool.sentiment import SentimentTool
+from src.tool.web_search import WebSearch
 
 
-class RiskControlServer(MCPServer):
-    def __init__(self, name: str = "RiskControlServer"):
+class SentimentServer(MCPServer):
+    def __init__(self, name: str = "SentimentServer"):
         super().__init__(name)
 
     def _initialize_standard_tools(self) -> None:
         self.tools.update(
             {
-                "risk_control_tool": RiskControlTool(),
+                "sentiment_tool": SentimentTool(),
+                "web_search": WebSearch(),
                 "terminate": Terminate(),
             }
         )

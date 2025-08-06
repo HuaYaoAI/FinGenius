@@ -68,43 +68,52 @@ class SentimentAgent(MCPAgent):
             
             # 1. 强制执行新闻搜索
             try:
-                news_result = await self.tool_call("web_search", {
-                    "query": f"{stock_code} 股票 最新消息 舆情",
-                    "max_results": 10
-                })
-                if news_result and news_result.success:
-                    analysis_tasks.append(("news_search", news_result.data))
+                news_result = await self.available_tools.execute(
+                    name="web_search", 
+                    tool_input={
+                        "query": f"{stock_code} 股票 最新消息 舆情",
+                        "max_results": 10
+                    }
+                )
+                if news_result and not news_result.error:
+                    analysis_tasks.append(("news_search", news_result.output))
                     logger.info(f"新闻搜索成功: {stock_code}")
                 else:
-                    logger.warning(f"新闻搜索失败: {stock_code}")
+                    logger.warning(f"新闻搜索失败: {stock_code}, {news_result.error if news_result else 'Unknown error'}")
             except Exception as e:
                 logger.error(f"新闻搜索异常: {stock_code}, {str(e)}")
             
             # 2. 强制执行社交媒体分析
             try:
-                social_result = await self.tool_call("web_search", {
-                    "query": f"{stock_code} 股吧 讨论 情绪",
-                    "max_results": 5
-                })
-                if social_result and social_result.success:
-                    analysis_tasks.append(("social_media", social_result.data))
+                social_result = await self.available_tools.execute(
+                    name="web_search", 
+                    tool_input={
+                        "query": f"{stock_code} 股吧 讨论 情绪",
+                        "max_results": 5
+                    }
+                )
+                if social_result and not social_result.error:
+                    analysis_tasks.append(("social_media", social_result.output))
                     logger.info(f"社交媒体分析成功: {stock_code}")
                 else:
-                    logger.warning(f"社交媒体分析失败: {stock_code}")
+                    logger.warning(f"社交媒体分析失败: {stock_code}, {social_result.error if social_result else 'Unknown error'}")
             except Exception as e:
                 logger.error(f"社交媒体分析异常: {stock_code}, {str(e)}")
             
             # 3. 强制执行舆情分析工具
             try:
-                sentiment_result = await self.tool_call("sentiment_analysis", {
-                    "stock_code": stock_code,
-                    "analysis_type": "comprehensive"
-                })
-                if sentiment_result and sentiment_result.success:
-                    analysis_tasks.append(("sentiment_analysis", sentiment_result.data))
+                sentiment_result = await self.available_tools.execute(
+                    name="sentiment_analysis", 
+                    tool_input={
+                        "stock_code": stock_code,
+                        "analysis_type": "comprehensive"
+                    }
+                )
+                if sentiment_result and not sentiment_result.error:
+                    analysis_tasks.append(("sentiment_analysis", sentiment_result.output))
                     logger.info(f"舆情分析工具成功: {stock_code}")
                 else:
-                    logger.warning(f"舆情分析工具失败: {stock_code}")
+                    logger.warning(f"舆情分析工具失败: {stock_code}, {sentiment_result.error if sentiment_result else 'Unknown error'}")
             except Exception as e:
                 logger.error(f"舆情分析工具异常: {stock_code}, {str(e)}")
             
