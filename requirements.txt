@@ -1,5 +1,3 @@
-streamlit
-asyncio
 pydantic~=2.10.6
 aiohttp
 openai~=1.66.5
@@ -21,7 +19,6 @@ googlesearch-python~=1.3.0
 baidusearch~=1.0.3
 duckduckgo_search~=7.5.3
 requests~=2.32.3
-duckduckgo-search~=7.5.5
 efinance~=0.5.5.2
 akshare~=1.16.87
 schedule~=1.2.2

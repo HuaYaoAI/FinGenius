@@ -23,6 +23,7 @@ class ResearchEnvironment(BaseEnvironment):
     description: str = Field(default="Environment for comprehensive stock research")
     results: Dict[str, Any] = Field(default_factory=dict)
     max_steps: int = Field(default=3, description="Maximum steps for each agent")
+    agent_interval_seconds: int = Field(default=3, description="Seconds to wait between agent runs")
 
     # Analysis mapping for agent roles
     analysis_mapping: Dict[str, str] = Field(
@@ -116,12 +117,12 @@ class ResearchEnvironment(BaseEnvironment):
                     if show_visual:
                         visualizer.show_agent_completed(agent_key, agent_count, total_agents)
                     
-                    # Wait 3 seconds before next agent (except for the last one)
+                    # Wait configured interval before next agent (except for the last one)
                     if agent_count < total_agents:
-                        logger.info(f"⏳ Waiting 3 seconds before next agent...")
+                        logger.info(f"⏳ Waiting {self.agent_interval_seconds} seconds before next agent...")
                         if show_visual:
-                            visualizer.show_waiting_next_agent(3)
-                        await asyncio.sleep(3)
+                            visualizer.show_waiting_next_agent(self.agent_interval_seconds)
+                        await asyncio.sleep(self.agent_interval_seconds)
                         
                 except Exception as e:
                     logger.error(f"❌ Error with {agent_key}: {str(e)}")

@@ -79,7 +79,9 @@ class EnhancedFinGeniusAnalyzer:
         try:
             # Create research environment
             visualizer.show_progress_update("创建研究环境")
-            research_env = await ResearchEnvironment.create(max_steps=max_steps)
+            # agent interval is injected from instance attribute if set
+            interval = getattr(self, "agent_interval_seconds", 3)
+            research_env = await ResearchEnvironment.create(max_steps=max_steps, agent_interval_seconds=interval)
             
             # Show registered agents
             agent_names = [
@@ -97,7 +99,7 @@ class EnhancedFinGeniusAnalyzer:
                     visualizer.show_progress_update(f"注册研究员", f"专家: {agent.name}")
             
             # Run research with tool call visualization
-            visualizer.show_progress_update("开始深度研究", "多专家顺序分析中（每3秒一个）...")
+            visualizer.show_progress_update("开始深度研究", f"多专家顺序分析中（每{interval}秒一个）...")
             
             # Enhance agents with visualization
             self._enhance_agents_with_visualization(research_env)
@@ -434,6 +436,12 @@ async def main():
         default=2, 
         help="Number of debate rounds in battle (default: 2)"
     )
+    parser.add_argument(
+        "--agent-interval", 
+        type=int, 
+        default=3, 
+        help="Seconds to wait between research agents (default: 3)"
+    )
 
     args = parser.parse_args()
     analyzer = None
@@ -441,6 +449,8 @@ async def main():
     try:
         # Create enhanced analyzer
         analyzer = EnhancedFinGeniusAnalyzer()
+        # propagate interval so _run_research_phase can use it
+        setattr(analyzer, "agent_interval_seconds", max(0, int(args.agent_interval)))
         
         # Run analysis with beautiful visualization
         results = await analyzer.analyze_stock(args.stock_code, args.max_steps, args.debate_rounds)

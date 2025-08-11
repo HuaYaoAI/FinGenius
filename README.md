@@ -128,6 +128,48 @@
    uv pip install -r requirements.txt
    ```
 
+### 方式三：使用自动安装脚本（推荐）
+
+为了简化安装过程，我们提供了一个自动安装脚本，可以自动完成上述所有步骤：
+
+1. 确保您的系统满足以下要求：
+   - Python 3.12 或更高版本
+   - curl 或 wget（用于下载 uv 包管理器）
+   - Git（用于克隆仓库）
+
+2. 运行自动安装脚本：
+   ```bash
+   ./install_fingenius.sh
+   ```
+
+3. 脚本将自动执行以下步骤：
+   - 检查 Python 版本
+   - 安装 uv 包管理器
+   - 克隆 FinGenius 仓库
+   - 创建虚拟环境
+   - 安装项目依赖
+   - 创建配置文件
+
+4. 安装完成后，按照脚本输出的指示进行操作：
+   - 编辑 `config/config.toml` 文件，添加您的 API 密钥和自定义设置
+   - 激活虚拟环境：`source .venv/bin/activate`
+   - 运行应用程序：`python main.py STOCK_CODE`
+
+5. （可选）运行测试脚本验证安装：
+   ```bash
+   python test_installation.py
+   ```
+
+更多安装选项和详细说明，请参阅 [INSTALLATION_SUMMARY.md](INSTALLATION_SUMMARY.md) 文件。
+
+## 使用便捷脚本运行
+
+为了简化运行过程，我们提供了一个便捷脚本 `run_fingenius.py`，它支持所有命令行选项：
+
+```bash
+python run_fingenius.py 000001 --tts --debate-rounds 3 --max-steps 5
+```
+
 ## 配置说明
 
 FinGenius 需要配置使用的 LLM API，请按以下步骤设置：
